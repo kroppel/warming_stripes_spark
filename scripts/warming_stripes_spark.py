@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pyspark
 from operator import add
 
@@ -9,7 +9,7 @@ def get_data(path):
     return data_de
 
 # visualize warming stripes
-def show_warming_stripes(data):
+"""def show_warming_stripes(data):
     temps = data
     stacked_temps = np.stack((temps, temps))
 
@@ -22,6 +22,7 @@ def show_warming_stripes(data):
     plt.gca().xaxis.set_major_locator(plt.NullLocator())
     plt.gca().yaxis.set_major_locator(plt.NullLocator())
     plt.savefig("stripes.png", bbox_inches = 'tight', pad_inches = 0, dpi=400)
+"""
 
 sc = pyspark.SparkContext("local", "App Name")
 
@@ -46,7 +47,8 @@ result_local = rdd2.reduceByKeyLocally(lambda a, b: tuple(map(add, a, b)))
 for key in result_local.keys():
     result_local[key] = result_local[key][0]/result_local[key][1]
 temps1 = list(result_local.values())
-show_warming_stripes(temps1)
+print(temps1)
+#show_warming_stripes(temps1)
 
 """
 result = rdd2.reduceByKey(lambda a, b: tuple(map(add, a, b))).map(lambda x: (x[0], x[1][0]/x[1][1])).collect()
