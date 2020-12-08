@@ -7,7 +7,8 @@ def get_data(path):
     data_de = np.loadtxt(fname=path, dtype=float, usecols=(0,18), skiprows=2, delimiter=";")
     return data_de
 
-sc = pyspark.SparkContext("local", "App Name")
+conf = pyspark.SparkConf()
+sc = pyspark.SparkContext(master="local", appName="App Name", conf=conf)
 
 months = []
 data = []
