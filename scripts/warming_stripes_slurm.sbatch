@@ -7,4 +7,4 @@
 module purge
 module load tools/python/3.7
 module load mpi/intel/2019-Update5
-srun python /home/vi46six/warming_stripes_spark/scripts/warming_stripes_mpi_distributed.py
+srun python /home/vi46six/warming_stripes_spark/scripts/distributed/warming_stripes_mpi_distributed.py
