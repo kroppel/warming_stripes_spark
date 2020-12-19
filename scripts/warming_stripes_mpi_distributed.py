@@ -2,6 +2,7 @@ from mpi4py import MPI
 import sys
 import numpy as np
 import math
+import time
 
 def get_data(path):
     data = list(map(lambda x: [x[i].strip() for i in [0, -2]], map(lambda x: x.split(";"), open(path, "r").read().split("\n")[2:][:-1])))
@@ -17,6 +18,8 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 print(rank)
 
+prog_start_time = time.time()
+
 # Read in Data
 
 months = []
@@ -29,14 +32,14 @@ for i in np.arange(start=1, stop=13):
         months.append(str(i))
         
 for month in months:
-    data.append(list(get_data("../data/regional_averages_tm_"+month+".txt")))
+    data.append(list(get_data("/home/vi46six/warming_stripes_spark/data/data_oversized/regional_averages_tm_"+month+"_oversized.txt")))
 
 data_flattened = [pair for sublist in data for pair in sublist]
 
 # data partitioning
 
 key_number = 2019-1881+1
-process_number = 1
+process_number = 64
 keys_per_process = math.ceil(key_number/process_number)
 if rank < (process_number-1):
     key_range = np.arange(1881+(rank*keys_per_process), 1881+((rank+1)*keys_per_process))
@@ -64,3 +67,10 @@ else:
     for i in np.arange(process_number-1):
         data_dict.update(comm.irecv(source=i+1).wait())
     print(data_dict)
+    
+    prog_stop_time = time.time()
+    exec_time = prog_stop_time-prog_start_time
+
+    print("Execution time:"+str(exec_time))
+
+	
