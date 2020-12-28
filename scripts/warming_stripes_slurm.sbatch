@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=warming-stripes-mpi
 #SBATCH --partition=s_hadoop
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=64
+#SBATCH --nodes=16
+#SBATCH --ntasks-per-node=36
 #SBATCH --time=2:00
 module purge
 module load tools/python/3.7
