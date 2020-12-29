@@ -30,14 +30,14 @@ for i in np.arange(start=1, stop=13):
         months.append(str(i))
         
 for month in months:
-    data.append(list(get_data("../data/regional_averages_tm_"+month+".txt")))
+    data.append(list(get_data("../../data/data_regular/regional_averages_tm_"+month+".txt")))
 
 data_flattened = [pair for sublist in data for pair in sublist]
 
 # data partitioning
 
 key_number = 2019-1881+1
-process_number = 4
+process_number = 2
 keys_per_process = math.ceil(key_number/process_number)
 if rank < (process_number-1):
     key_range = np.arange(1881+(rank*keys_per_process), 1881+((rank+1)*keys_per_process))
