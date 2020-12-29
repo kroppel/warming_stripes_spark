@@ -6,24 +6,21 @@ import time
 
 def get_data_states(path):
     data = list(map(lambda x: [x[i].strip() for i in [0] + np.arange(2,18).tolist()], map(lambda x: x.split(";"), open(path, "r").read().split("\n")[2:][:-1])))
-    
     return data
-
+    
 def shuffle(data_dict, process_number, rank, key_ranges):
-    return_dict = {}
     for foreign_rank in np.arange(0, process_number):
-	temp1 = {}
-	if foreign_rank != rank:
-	    for key in key_ranges[foreign_rank]:
+        temp1 = {}
+        if foreign_rank != rank:
+            for key in key_ranges[foreign_rank]:
                 temp1[key] = data_dict[key]
-	    request = comm.isend(temp1, dest=foreign_rank)
-	    request.wait()
-	    temp2 = {}
+            request = comm.isend(temp1, dest=foreign_rank)
+            request.wait()
+            temp2 = {}
             temp2.update(comm.irecv(source=i+1).wait())
-	    for key in key_ranges[rank]:
-	        data_dict[key] = data_dict[key] + temp2[key]
+            for key in key_ranges[rank]:
+                data_dict[key] = data_dict[key] + temp2[key]
 
-	      
 
 def reducer(data_dict):
     keys = list(data_dict.keys())
@@ -34,11 +31,10 @@ def reducer(data_dict):
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-#print(rank)
 
 prog_start_time = time.time()
 
-# Read in Data
+# read in data completely
 
 data_path_hdfs = "data/data_oversized/"
 data_path_local = "/home/vi46six/warming_stripes_spark/data/data_oversized/"
@@ -50,32 +46,37 @@ for month in months:
 
 data_flattened = [pair for sublist in data for pair in sublist]
 
-# data partitioning
+# data partitioning locally
 
 key_ranges = {}
 key_number = 2019-1881+1
-process_number = 576
+# number of total processes
+process_number = 4
 keys_per_process = math.ceil(key_number/process_number)
+# id of process that gets last partition assigned
+last_process = math.ceil(key_number/keys_per_process)
 
-for rank in np.arange(0, process_number):
-    if rank < (process_number-1):
-        key_ranges[rank] = np.arange(1881+(rank*keys_per_process), 1881+((rank+1)*keys_per_process))
+
+for r in np.arange(0, process_number):
+    if r < (last_process-1):
+        key_ranges[r] = np.arange(1881+(r*keys_per_process), 1881+((r+1)*keys_per_process))
+    elif r == (last_process-1):
+        key_ranges[r] = np.arange(1881+(r*keys_per_process), 2020)
     else:
-        key_ranges[rank] = np.arange(1881+(rank*keys_per_process), 2020)
+        key_ranges[r] = np.asarray([])
 
-#print(str(rank)+"; "+str(key_range))
+print(str(rank)+"; "+str(key_ranges))
 
-
-data_partitioned = [[int(pair[0]), float(pair[1])] for pair in data_flattened if int(pair[0]) in key_range] 
+data_partitioned = [[int(pair[0]), float(pair[1])] for pair in data_flattened if int(pair[0]) in key_ranges[rank]] 
 
 # processing
 
 data_dict = {}
 
-for key in key_range:
+for key in key_ranges[rank]:
     data_dict[key] = [pair[1] for pair in data_partitioned if pair[0]==key]
 
-shuffle(data_dict, process_number, rank, key_ranges)
+#shuffle(data_dict, process_number, rank, key_ranges)
 
 data_dict = reducer(data_dict)
 
@@ -93,5 +94,3 @@ else:
     exec_time = prog_stop_time-prog_start_time
 
     print("Execution time:"+str(exec_time))
-
-	
